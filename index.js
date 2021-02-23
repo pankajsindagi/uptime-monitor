@@ -5,20 +5,45 @@ Primary file for API
  */
 
 // Dependencies
-import { createServer } from 'http';
-import { parse } from 'url';
-import { StringDecoder } from 'string_decoder';
-import { config } from './config';
+let http = require('http');
+let https = require('https');
+let url = require('url');
+let StringDecoder = require('string_decoder').StringDecoder;
+let config = require('./config');
+let fs = require('fs');
 
-// The server should respond to all the requests with a string 
-let server = createServer(function (req, res) {
+// Instantiate the HTTP server 
+let httpServer = http.createServer(function (req, res) {
+    unifiedServer(req, res);
+});
 
+// Instantiate the HTTPS server 
+let httpsServerOptions = {
+    'key': fs.readFileSync('./ssl/key.pem', 'utf-8'),
+    'cert': fs.readFileSync('./ssl/cert.pem', 'utf-8')
+};
+let httpsServer = https.createServer(httpsServerOptions, function (req, res) {
+    unifiedServer(req, res);
+});
+
+// Start the HTTP server
+httpServer.listen(config.httpPort, function () {
+    console.log(`The server is listening on port ${config.httpPort} in ${config.envName} enviroment`);
+});
+
+// Start the HTTPS server
+httpsServer.listen(config.httpsPort, function () {
+    console.log(`The server is listening on port ${config.httpsPort} in ${config.envName} enviroment`);
+});
+
+// All the server logic for both http and https server
+let unifiedServer = function (req, res) {
     // Get the URL and parse it
-    let parsedUrl = parse(req.url, true);
+    let parsedUrl = url.parse(req.url, true);
 
     // Get the path
     let path = parsedUrl.pathname;
-    let trimmedUrl = path.replace(/^\/+|\/+$/g, '');
+    let trimmedPath = path.replace(/^\/+|\/+$/g, '');
 
     // Get the query string as an object
     let queryStringObject = parsedUrl.query;
@@ -62,26 +87,21 @@ let server = createServer(function (req, res) {
             var payloadString = JSON.stringify(payload);
 
             // Return the response
-            res.writeHead(statusCode);
+            res.writeHead(statusCode, { 'Content-Type': 'application/json' });
             res.end(payloadString);
 
             // log the request path
             console.log('Request was recieved with this payload: ' + buffer);
         });
     });
-});
-
-server.listen(3000, function () {
-    console.log('The server is listening on port 3000');
-});
+};
 
 // Define the handlers
 let handlers = {};
 
-// Sample handlers
-handlers.sample = function (data, callback) {
-    // Callback a http status code, and a payload object
-    callback(406, { 'name': 'sample handler' });
+// ping handlers
+handlers.ping = function (data, callback) {
+    callback(200);
 };
 
 // Not found handler
@@ -89,7 +109,19 @@ handlers.notFound = function (data, callback) {
     callback(404);
 };
 
+// Hello handler
+handlers.hello = function (data, callback) {
+    callback(200, {
+        'status': 200,
+        'remarks': 'Ok',
+        'data': {
+            'message': 'Welcome to uptime monitor app'
+        }
+    })
+}
+
 // Define a request router
 let router = {
-    'sample': handlers.sample
+    'ping': handlers.ping,
+    'hello': handlers.hello
 }

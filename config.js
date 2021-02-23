@@ -9,13 +9,15 @@ let environments = {};
 
 // Staging {default} environment
 environments.staging = {
-    'port': 5000,
+    'httpPort': 3000,
+    'httpsPort': 3001,
     'envName': 'Staging'
 };
 
 // Production environment
 environments.production = {
-    'port': 3000,
+    'httpPort': 5000,
+    'httpsPort': 5001,
     'envName': 'Production'
 };
 
@@ -23,7 +25,7 @@ environments.production = {
 let currentEnvironment = typeof (process.env.NODE_ENV) == 'string' ? process.env.NODE_ENV.toLowerCase() : '';
 
 // Check that the current environment is one of the environment above, if not, default to staging.
-let environmentToExport = typeof (currentEnvironment) == 'object' ? environments[currentEnvironment] : environments.staging;
+let environmentToExport = typeof (environments[currentEnvironment]) == 'object' ? environments[currentEnvironment] : environments.staging;
 
 // Export the module
 module.exports = environmentToExport;
