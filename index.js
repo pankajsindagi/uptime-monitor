@@ -5,15 +5,15 @@ Primary file for API
  */
 
 // Dependencies
-const http = require('http');
-const url = require('url');
-const StringDecoder = require('string_decoder').StringDecoder;
+import { createServer } from 'http';
+import { parse } from 'url';
+import { StringDecoder } from 'string_decoder';
 
 // The server should respond to all the requests with a string 
-var server = http.createServer(function (req, res) {
+let server = createServer(function (req, res) {
 
     // Get the URL and parse it
-    var parsedUrl = url.parse(req.url, true);
+    let parsedUrl = parse(req.url, true);
 
     // Get the path
     let path = parsedUrl.pathname;
