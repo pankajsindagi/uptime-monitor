@@ -8,6 +8,7 @@ Primary file for API
 import { createServer } from 'http';
 import { parse } from 'url';
 import { StringDecoder } from 'string_decoder';
+import { config } from './config';
 
 // The server should respond to all the requests with a string 
 let server = createServer(function (req, res) {
