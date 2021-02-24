@@ -9,8 +9,10 @@ let http = require('http');
 let https = require('https');
 let url = require('url');
 let StringDecoder = require('string_decoder').StringDecoder;
-let config = require('./config');
+let config = require('./lib/config');
 let fs = require('fs');
+let handlers = require('./lib/handlers');
+let helpers = require('./lib/helpers');
 
 // Instantiate the HTTP server 
 let httpServer = http.createServer(function (req, res) {
@@ -64,27 +66,27 @@ let unifiedServer = function (req, res) {
         buffer += decoder.end();
 
         // Choose the handler this request should go to. If one is not found, use the not found handler.
-        var chosenHandler = typeof (router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
+        let chosenHandler = typeof (router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
 
         // Construct the data object to send to the handler
-        var data = {
+        let data = {
             'trimmedPath': trimmedPath,
             'queryStringObject': queryStringObject,
             'method': method,
             'headers': headers,
-            'payload': buffer
+            'payload': helpers.parseJsonToObject(buffer)
         };
         // Route the request to the handler specified in the router
         chosenHandler(data, function (statusCode, payload) {
 
-            // Use the status code returned from the handler, or set the default status code to 200
+            // Use the status code returned from the handler, or default the status code to 200
             statusCode = typeof (statusCode) == 'number' ? statusCode : 200;
 
             // Use the payload returned from the handler, or set the default payload to an empty object
             payload = typeof (payload) == 'object' ? payload : {};
 
             // Convert the payload to a string
-            var payloadString = JSON.stringify(payload);
+            let payloadString = JSON.stringify(payload);
 
             // Return the response
             res.writeHead(statusCode, { 'Content-Type': 'application/json' });
@@ -96,32 +98,10 @@ let unifiedServer = function (req, res) {
     });
 };
 
-// Define the handlers
-let handlers = {};
-
-// ping handlers
-handlers.ping = function (data, callback) {
-    callback(200);
-};
-
-// Not found handler
-handlers.notFound = function (data, callback) {
-    callback(404);
-};
-
-// Hello handler
-handlers.hello = function (data, callback) {
-    callback(200, {
-        'status': 200,
-        'remarks': 'Ok',
-        'data': {
-            'message': 'Welcome to uptime monitor app'
-        }
-    })
-}
 
 // Define a request router
 let router = {
     'ping': handlers.ping,
-    'hello': handlers.hello
+    'hello': handlers.hello,
+    'users': handlers.users
 }
